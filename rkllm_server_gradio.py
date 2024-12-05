@@ -1,6 +1,7 @@
 import sys
 import resource
 import gradio as gr
+import psutil
 from ctypes_bindings import *
 from model_class import *
 from mesh_utils import *
@@ -50,6 +51,15 @@ if __name__ == "__main__":
         except RuntimeError as e:
             print(f"ERROR: {e}")
         return history
+        
+    def get_ram_usage():
+        # Get memory usage details
+        memory = psutil.virtual_memory()
+        total_ram = memory.total / (1024 ** 3)  # Convert from bytes to GB
+        percent = memory.percent
+        used_ram = percent * total_ram / 100
+        ram_usage = f"{percent}%; {used_ram:.2f} GB / {total_ram:.2f} GB"
+        return ram_usage
 
     # Create a Gradio interface
     with gr.Blocks(title="Chat with RKLLM") as chatRKLLM:
@@ -93,6 +103,13 @@ if __name__ == "__main__":
                             )
         print("\nNo model loaded yet!\n")
 
+        # Add a button to display RAM usage
+        def display_ram_usage():
+            ram_usage = get_ram_usage()  # Get the formatted RAM usage
+            return "Click to refresh " + ram_usage  # This will be returned to the RAM display Textbox
+
+        ram_button = gr.Button("Click to display RAM Usage")
+        ram_button.click(display_ram_usage, outputs=ram_button)
 
     # Enable the event queue system.
     chatRKLLM.queue()
